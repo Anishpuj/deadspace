@@ -1,0 +1,44 @@
+name: Weekend Auto Commit
+
+on:
+  schedule:
+    # Run on weekends at different times for variety
+    - cron: '0 10 * * 6'  # Saturday 10:00 AM UTC
+    - cron: '0 14 * * 0'  # Sunday 2:00 PM UTC
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  weekend-commit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+    - name: Update weekend activity
+      run: |
+        # Create/update weekend activity file
+        echo "Weekend activity: $(date '+%Y-%m-%d %H:%M:%S UTC')" > weekend-activity.md
+        echo "" >> weekend-activity.md
+        echo "## Weekend Development Log" >> weekend-activity.md
+        echo "- Weekend commit on $(date '+%A, %Y-%m-%d')" >> weekend-activity.md
+        echo "- Maintaining contribution streak" >> weekend-activity.md
+        echo "- Project: ${{ github.repository }}" >> weekend-activity.md
+        echo "" >> weekend-activity.md
+        echo "### Quick Stats" >> weekend-activity.md
+        echo "- Total commits this week: $(git rev-list --count --since='1 week ago' HEAD)" >> weekend-activity.md
+        echo "- Current streak: $(date '+%j')" >> weekend-activity.md
+        echo "" >> weekend-activity.md
+        
+    - name: Commit and push changes
+      run: |
+        git add weekend-activity.md
+        git diff --staged --quiet || git commit -m "🌟 Weekend contribution - $(date '+%Y-%m-%d')"
+        git push
